@@ -4,22 +4,28 @@ VALUES  ('hacksquat','quadriceps','{hamstrings,glutes}','machine',2.5),
 		('lateral raises','shoulders',NULL,'dumbell',1.25),
 		('hamstring curl','hamtrings',NULL,'machine',2.5),
 		('bicep curl','biceps',NULL,'dumbell',1.25),
-		('calf raises','calfs',NULL,'machine',1.25),
+		('calf raises','calves',NULL,'machine',1.25),
 		('lat pulldown','back','{biceps}','machine',2.5),
 		('dips','chest','{shoulders,triceps}','bodyweight',2.5),
-		('hip thrust','glutes',NULL,'machine',2.5);
+		('hip thrust','glutes',NULL,'machine',2.5)
+		on conflict do nothing;
+
+insert into WORKOUT_TEMPLATES (temp_name) 
+values ('Upper A'), ('Lower A')
+on conflict do nothing;
 
 
 
-INSERT INTO templates (temp_name,exercise_name,work_sets,min_reps,max_reps)
-VALUES  ('Upper A','barbell bench',2,8,10),
-        ('Upper A','lateral raises',3,10,15),
-        ('Upper A','lat pulldown',2,10,12),
-        ('Upper A','dips',3,5,7),
-        ('Lower A','hacksquat',2,6,8),
-        ('Lower A','calf raises',3,12,15),
-        ('Lower A','hamstring curl',2,10,12),
-        ('Lower A','hip thrust',3,10,12);
-        
+INSERT INTO TEMPLATE_EXERCISES  (temp_id,exercise_id,work_sets,exercise_order,min_reps,max_reps)
+select wt.temp_id,e.exercise_id,v.work_sets,v.exercise_oder,v.min_reps,v.max_reps
+from 	(values ('Upper A','barbell bench',2,1,8,12),
+				('Upper A','bicep curl',3,2,10,15)				
+) as v(temp_name,exercise_name,work_sets,exercise_oder,min_reps,max_reps)
+join WORKOUT_TEMPLATES WT on wt.temp_name = v.temp_name
+join exercises e on e.EXERCISE_NAME  = v.EXERCISE_NAME
+on conflict do nothing;
 
---select * from templates t 
+select * from TEMPLATE_EXERCISES TE;
+
+
+			
