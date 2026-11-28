@@ -1,8 +1,5 @@
-import pandas as pd
-import numpy as np
-import math
 import logging
-
+from collections import defaultdict
 
 logging.basicConfig(level=logging.INFO)
 
@@ -33,46 +30,61 @@ def evaluate_progression(target_work_sets:int, min_reps:int, max_reps:int, load_
     #INITIAL_CALIBRATION = (suggested_weight_kg = None, target_reps = min_reps)
 
     old_work_sets = [(set_type,weight_kg,reps) for (set_type,weight_kg,reps) in set_list if set_type != 'warmup']
-    reps = [(set_type,weight_kg,reps) for (set_type,weight_kg,reps) in old_work_sets if reps >= max_reps]
-    if len(old_work_sets) == 0:
-        return None,min_reps
+    reps = [(reps) for (_,_,reps) in old_work_sets]
+    weight = [(weight_kg) for (_,weight_kg,_) in old_work_sets ]
 
-    elif len(old_work_sets) >= target_work_sets and len(reps) >= target_work_sets:
-        return old_work_sets[0][1] + load_increment_kg, min_reps
+    if len(old_work_sets) == 0:
+        return ("INITIAL_CALIBRATION",None,min_reps)
+
+    elif len(old_work_sets) >= target_work_sets and all(r >= max_reps for r in reps):
+        return ("INCREASE_LOAD",max(weight) + load_increment_kg, min_reps)
 
     else:
-        return old_work_sets[0][0],max_reps
+        reps = [(max_reps - r) for r in reps]
+        reps = [max(r,0) for r in reps]
+        return ("HOLD_LOAD",max(weight),reps)
 
 
 
 def aggregate_weekly_volume(logged_sets:list[dict]):
-    logged_sets = repositories.get_logged_sets()
-    volume = {}
-    if logged_sets['status'] == 'warmup':
-        logged_sets.remove[x]
-    if current_status == 'deload':
-        return
+    result = {
+        "active": defaultdict(float),
+        "deload": defaultdict(float)
+    }
+    for x in logged_sets:
+        if x["set_type"] == "warmup":
+            continue
+        else:
+            if x["current_status"] == "active":
+                muscle_group = x["primary_muscle_group"]
+                result["active"][muscle_group] +=1.0
+                if x["secondary_muscle_groups"] != None:
+                    secondary = x["secondary_muscle_groups"]
+                    for k in secondary:
+                        result["active"][k] += 0.5
+            elif x["current_status"] == "completed":
+                continue            
+            else:
+                muscle_group = x["primary_muscle_group"]
+                result["deload"][muscle_group] +=1.0
+                if x["secondary_muscle_groups"] != None:
+                    secondary = x["secondary_muscle_groups"]
+                    for k in secondary:
+                        result["deload"][k] += 0.5
 
-    if secondary_muscle_groups:
-        volume[secondary_muscle_groups]+=0.5
-    else:
-        volume[primary_muscle_group]+=1.0    
-
-
+    return result                    
 
 
     
 
 def main():
+    max_reps = 10
+    reps = [8,12,10,9,15]
+    reps = [(max_reps - r) for r in reps]
+    reps = [max(r,0) for r in reps]
+    logging.info(reps)
 
-    set_list = [('warmup',30,5),('working',80,8),('working',80,10)]
-
-    reps =  [3,4,5]
-    logging.info(np.array(reps)>=4)
-    old_work_sets = [(set_type,weight_kg,reps) for (set_type,weight_kg,reps) in set_list if set_type != 'warmup']
-    logging.info(old_work_sets[2])
-
-    logging.info(calculate_relative_strength(100,-1))
+    logging.info("main")
 
 if __name__ == '__main__':
     main()
